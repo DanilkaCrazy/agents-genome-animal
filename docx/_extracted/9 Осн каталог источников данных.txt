@@ -1,0 +1,46 @@
+GenomeAI — Каталог открытых табличных источников данных (дополнение)
+Версия: v1.1
+Дата: 17.12.2025
+Цель этого дополнения — расширить перечень открытых источников с табличными данными, которые можно использовать для обучения ML, тестовых показов и отладки пайплайнов (ингест → QC → фичи → обучение → AI-отчёт).
+Критерии “подходит под условия документации”
+желательно наличие `animal_id` / `cow_id`
+желательно наличие `parity` / `lactation_number`
+`calving_date` или (`record_date` + `days_in_milk`)
+`milk_305_kg` или test-day/суточные удои для расчёта 305d
+Табличные открытые датасеты, наиболее совместимые с MVP (P0/P1)
+Примечания по юридике и комплаенсу
+Всегда перепроверяйте лицензию в карточке набора (особенно Kaggle/GitHub): коммерческое использование, атрибуция, ограничения на AI training / text & data mining.
+Даже при открытой лицензии держите происхождение данных и ссылку на источник в реестре датасетов проекта (например, data_catalog.yml / README), чтобы корректно оформить атрибуцию.
+Для тестовых демонстраций без рисков используйте синтетические наборы; реальные — только в R&D контуре.
+Рекомендация по приоритизации
+Zenodo Dummy milking robot — для витрин, отчётов, пайплайна, тестов.
+Mendeley Czech parity/breed — быстро собрать P0 модель по лактациям + contemporary groups.
+Dryad mountain-pastured — добавить пример внешних факторов (THI) и кейс QC по датам/лактациям.
+Mendeley pedigree+performance — для демонстрации P1 “mating plan по родословной”.
+Категория | Датасет (ссылка) | Формат | Лицензия | Покрытие полей (примерно) | Комментарий
+P0: лактация/надой (макс. совместимость) | Association between age at first calving and productive/reproductive performance (Holstein) — Dryad
+https://doi.org/10.5061/dryad.85fm181 | табличный файл(ы) в Dryad (обычно CSV/TSV) | CC0 (Dryad по умолчанию) | animal_id (+), calving_date (часто +), parity (часто +), milk_305_kg (часто +), fat/protein/SCC (возможны) | Крупный реальный датасет на уровне животных/лактаций; подходит для обучения регрессии на milk_305_kg и демонстрации отчёта.
+P0: лактация + погодные факторы | Milk production and environmental conditions of mountain‑pastured Braunvieh cows (2000–2015) — Dryad
+https://doi.org/10.5061/dryad.z612jm68g | mountain_pastured_cows.csv + metadata.txt | CC0 (Dryad по умолчанию) | animal_id (есть как 'cow'/'id'), calving_date (+), lactation_number/parity (+), milk (среднее по 3 контрольным удоям), погодные индексы | Можно использовать как P0 (молоко/лактация) + демо влияния погоды/THI (feature engineering).
+P0: молоко+воспроизводство (лактационный уровень) | Association between production & reproduction parameters by parity/breed (Czech Republic) — Mendeley Data
+https://doi.org/10.17632/6vy2tvv7jn.1 | XLSX/CSV (в составе набора; скачивание с Mendeley) | CC BY 4.0 | individual IDs (+), calving dates (+), parity (+), milk per lactation (+), fat/protein/lactose (+), farm_id/stable_id (+) | Хорошо ложится на нашу схему animals+lactations; удобно для тестов contemporary group и отчёта.
+P1: родословная + продуктивность (mating plan демо) | Performance of superior dairy cattle sires (Holstein) — Mendeley Data
+https://doi.org/10.17632/2sm93h8t7y.2 | табличные файлы (identity + pedigree + performance) | CC BY 4.0 | animal identity (+), sire_id (+), dam_id (+), birth_date (часто +), calving_date (часто +), milk yield (+), lactation length (+) | Подходит для прототипа mating plan по родословной (P1) и связи 'продуктивность ↔ быки/линии'.
+P0/P1: test‑day + SCC (здоровье/качество молока) | Somatic cell counts test‑day records (Iranian Holstein‑Friesian) — Mendeley Data
+https://doi.org/10.17632/vhds87r252.1 | табличные test‑day записи | CC BY 4.0 | record_date (+), daily_milk_kg (+), fat/protein (+), DIM (+), parity (+), SCC (+) | Отлично для блока QC, флагов мастита (SCC) и как дополнительная цель/признаки.
+Демо/тест пайплайна (максимально удобно) | Dummy Dataset – Milking Robot Records (AgriFoodTEF Data Space Demonstrator) — Zenodo
+https://doi.org/10.5281/zenodo.17017745 | milking_robot_dataset.csv | CC BY 4.0 | cow_id (+), lactation_number/parity (+), days_in_milk (+), milking_datetime (+), milk_yield_kg (+), fat/protein (+), SCC (+), activity/weight/feed (+) | Синтетика (не реальная ферма), зато идеальна для тестовых показов, UI/отчётов и отладки пайплайна без NDA.
+P0: 305‑дн. удой по первотёлкам | Management & growth derivatives to predict first lactation milk yield (heifers, L_305) — Zenodo
+https://doi.org/10.5281/zenodo.10827560 | Data.zip (набор таблиц train/test) | Open (см. карточку Zenodo) | ID (+), L_305_* (+) как аналог milk_305_kg, возраст осеменения/отёла (+), веса по месяцам (+) | Очень удобно для базовой ML‑модели, когда нет подробных лактационных записей.
+P0/P1: сенсоры + молоко (для расширений) | Ultrasound echotexture + daily milk yield on measurement days — Mendeley Data
+https://doi.org/10.17632/2c3xf92pk4.1 | CSV + файлы (изображения) + признаки | см. карточку Mendeley (обычно CC BY для open datasets) | daily milk yield (+), дополнительные признаки; идентификаторы животных (часто +) | Можно использовать как демонстрацию 'AI + дополнительные сигналы', но не обязателен для MVP.
+P0: 305‑дн. лактация + события (первотёлки) | Productional data of primiparous cows (305‑day standardized lactation + events) — Mendeley Data
+https://doi.org/10.17632/j42n4x723g.2 | несколько таблиц (milk per day, events, reproduction и т.п.) | CC BY 4.0 | milk per day (+), события осеменения/диагностики беременности (+), longevity (+); 305‑дн. горизонт заложен структурой | Подходит для построения признаков по early‑lactation и генерации объяснений в отчёте.
+P1: генетика/генотипы + фенотип (для будущих улучшений) | Genotype + phenotype of 1092 Holstein cows (milk yield GWAS) — Dryad
+https://doi.org/10.5061/dryad.cs133 | RAR архив (genotype_phenotype_of_1092cows.rar) | CC0 (Dryad по умолчанию) | phenotype milk_yield (+), генотипы SNP (+) | Если MVP/roadmap включает геномные фичи — это хороший публичный набор для прототипа.
+Доп.: роботы/AMS (реальные сенсоры) | MmCows dataset (NeurIPS/Neis Lab) — GitHub
+https://github.com/Neis-Lab/MmCows | zip/архивы с таблицами (sensor_data, milk, weather и т.п.) | см. репозиторий (обычно research license) | milk records (+), sensor streams (+), погодные/THI (+) | Подходит для демонстрации интеграции с AMS/датчиками, но требует проверки лицензии на коммерческое использование.
+Доп.: агрегаты/бенчмарки рынка (не cow-level) | Eurostat / FAOSTAT / нацстаты — молоко/поголовье/структура (табличные ряды)
+https://ec.europa.eu/eurostat / https://www.fao.org/faostat/ | CSV/TSV API | open data (проверьте условия конкретного портала) | не animal-level; только макро‑метрики | Используется для справочных бенчмарков в отчёте и в материалах GTM, не для обучения P0 модели.
+Демо: простые табличные наборы | Kaggle: Farm Milk Production Data (daily) — Kaggle
+https://www.kaggle.com/datasets/ehsanzx/farm-milk-production | CSV | зависит от автора на Kaggle (проверить перед коммерческим использованием) | daily production (+), env/farm conditions (возможны); cow_id часто отсутствует | Удобно для demo-аналитики/визуализаций, но обычно не хватает идентификаторов животных.

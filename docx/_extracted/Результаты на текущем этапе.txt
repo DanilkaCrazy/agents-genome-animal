@@ -1,0 +1,52 @@
+Отчёт о работе команды по проекту GenomeAI AgroAnimals
+Введение
+С октября 2025 команда работала над проектом GenomeAI AgroAnimals — MVP для ML-оценки продуктивности молочного КРС в СНГ. Мы завершили полный pre-engineering цикл: discovery, pivot с human genomics на агротех, product/tech design и спецификацию пилота. Спринты разработки не проводились (фокус на валидации и артефактах для демо-дня), но создали 10+ документов (презентация 12 слайдов, specs 50+ страниц, wireframes, прототипы). Это демонстрирует системный подход к AI product development.
+Хронология работы (октябрь 2025 – настоящее время)
+Октябрь 2025 (недели 1-4): Discovery и pivot
+Исследование human genomics выявило барьеры (ФЗ-152, этика, конфликты наставников).
+Pivot на AgroAnimals: анализ рынка СНГ (58+ млн т молока), боли ферм (разрозненные данные СЕЛЭКС/Excel).
+Артефакты: Market research (статистика РФ/Беларусь/КЗ/Уз), гипотезы болей, Lean Canvas v1
+Ноябрь 2025 (недели 5-8): Product Design
+Спецификация MVP: use cases UC-1 (Performance Ranking), UC-2 (QC-report).
+Data contract P0 (animal_id, parity, calving_date, milk_305_kg).
+План 4-недельного пилота с deliverables (Executive PDF, Full XLSX, QC-list).
+Артефакты: Презентация 12 слайдов, customer journey map, пилот timeline
+Декабрь 2025 (недели 9-13): Tech Design
+ML пайплайн (QC → прогноз 305-дн → скоринг), метрики (MAE/RMSE/Spearman).
+UI/UX отчётов, on-prem архитектура (RBAC, manifest).
+Артефакты: ML spec, C4 диаграммы
+Работа команды по ролям (общий вклад 250+ часов)
+Конкретные результаты (что покажем на демо 22 января)
+1. Problem-Solution Fit завалидирован
+Проблема: разрозненные данные, субъективная выбраковка (подтверждено статистикой СНГ).
+Решение: ML-ранжирование + AI "что делать на неделе" (3-5 действий).
+2. MVP спецификация готова к пилоту
+P0 данные: 4 поля (CSV/XLSX из СЕЛЭКС/1С).
+Deliverables: Executive PDF (1 стр. для директора), Full XLSX (зоотехник), QC-list ошибок, ML metrics report
+Timeline пилота: Нед1: маппинг, Нед2: прогон, Нед3: обсуждение, Нед4: фиксация эффекта
+3. Техническая зрелость
+ML: time-validation на ферменных данных, target Spearman >0.7.
+Безопасность: on-prem default, данные не уходят с фермы, anti-hallucination.
+Бизнес: ROI (Δудой +5-10%), пилот цена 500k ₽, подписка 100k ₽/ферма/мес.
+Метрики успеха (3 месяца): 100% гипотез покрыто, 0 critical gaps, pivot speed 2-3 недели.
+Демо-день 22 января: что покажем
+Live демо (10 минут):
+CJM walkthrough: загрузка CSV → QC errors → ML ranking → AI отчёт (Executive + списки).
+Jupyter demo: mock данные → метрики (MAE/RMSE/Spearman) → action buckets
+Архитектура: C4 диаграммы + on-prem deploy playbook
+Pitch deck (презентация): Проблема → рынок → решение → пилот → economics → next steps
+План после демо-дня
+Январь 2026: Тестовая P0-выгрузка от 1 фермы, feedback refinement.
+Февраль 2026: Старт спринтов (QC-модуль → ML PoC → пилот).
+Q2-Q4: Тиражирование 2-3 фермы → P1 данные → multi-farm.
+Риски под контролем:
+Данные: QC coverage >80%
+ИБ: on-prem + NDA
+Scale: 1 ферма → холдинг.
+Заключение
+За 3+ месяца (октябрь-декабрь 2025) команда создала коммерчески готовую MVP-спецификацию GenomeAI AgroAnimals. Pivot с human на agro, параллельная работа ролей и фокус на артефактах для демо-дня 22 января демонстрируют профессиональный подход. Готовы показать live прототипы и запустить пилот. Проект соответствует приоритетам РФ FoodTech 2030
+Роль | Задачи (октябрь-декабрь) | Артефакты для демо-дня
+Product Manager | Market discovery, MVP-spec (UC-1/2), пилот-план, бизнес-кейс | Презентация 12 слайдов, data contract P0/P1, ROI framework
+ML Engineer | Пайплайн design, метрики качества, anti-hallucination (fact-pack), Jupyter PoC | ML спецификация, mock на синтетике (Spearman rank), confidence intervals
+Frontend Developer | UI/UX: Executive/Full отчёты, drag-n-drop загрузка CSV/XLSX, списки "ядро/выбраковка" | Figma прототип (10+ экранов), responsive specs
+Backend Developer | On-prem (Docker локальный), data flow, безопасность (аудит хэшей, NDA пакет) | C4 диаграммы, API spec, deploy playbook

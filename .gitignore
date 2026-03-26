@@ -1,0 +1,10 @@
+artifacts/
+data/
+models/
+__pycache__/
+*.pyc
+.venv/
+.env
+.DS_Store
+venv/
+__pycache__/

@@ -1,0 +1,302 @@
+Название проекта: «Genome AI: AgroAnimals»
+Суть: SaaS-платформа для молочных ферм, объединяющая фенотипические данные (надои, здоровье), геномную информацию и машинное обучение для оптимизации селекции и операционного управления стадом.
+Ключевая ценность (Value Proposition): Переход от селекции «по ощущениям» к доказательной селекции (Data-Driven), снижение убытков от выбраковки ценных животных и повышение надоев на 3-5% за счет точного прогнозирования продуктивности.
+Концептуальное проектирование (System Design)
+Цель: создать автоматизированную систему поддержки принятия решений для селекции и управления стадом, минимизирующую человеческий фактор и максимизирующую генетический прогресс.
+Задачи:
+Агрегация разнородных данных (генотип, фенотип, среда).
+Очистка данных и контроль качества (Data Quality Guardrails).
+Генерация прогнозов (продуктивность, здоровье).
+Формирование списка действий (Action Plan).
+Требования (Requirements)
+Функциональные: Система должна поддерживать загрузку форматов .csv, .xls, .vcf (геномика); предоставлять дашборд с алертами; позволять экспорт отчетов.
+Нефункциональные: Воспроизводимость экспериментов (Model Registry); мониторинг дрейфа данных (Data Drift); время инференса < 2 секунд для одной записи.
+Архитектура решения
+В данном разделе представлена архитектура решения для предиктивной аналитики в животноводстве, охватывающая этапы от загрузки данных из различных источников до формирования actionable intelligence. Особое внимание уделено интеграции геномных и фенотипических данных, а также использованию гибридных моделей машинного обучения для повышения точности прогнозов.
+1. Data Ingestion Layer (Слой загрузки данных)
+Этот слой отвечает за сбор и первичную обработку данных из различных источников.
+Источники данных:
+СЕЛЭКС/1С (фенотипы): Информация о продуктивности, здоровье и других характеристиках животных.
+Лаборатории (генотипы .vcf/.plink): Геномные данные, полученные в результате секвенирования или генотипирования.
+IoT (датчики активности): Данные с датчиков, отслеживающих активность животных (например, количество шагов, время отдыха).
+Компоненты:
+ETL-коннекторы: Специализированные коннекторы для извлечения, преобразования и загрузки данных из различных источников. Особое внимание уделяется поддержке legacy-форматов (CSV, Excel), которые часто используются в существующих системах.
+API-интеграция: Для интеграции с современными системами, предоставляющими данные через API.
+2. Data Quality & Preprocessing (QC Module)
+Модуль выполняет функции контроля качества и предварительной обработки данных.
+Функциональность:
+Проверка на аномалии: Выявление и устранение аномальных значений (например, выбросы в надоях, некорректные значения температуры).
+Удаление дубликатов: Идентификация и удаление дублирующихся записей.
+Обработка пропущенных значений: Заполнение пропущенных значений или удаление записей с большим количеством пропусков.
+Преобразование данных: Приведение данных к единому формату и масштабу.
+Научное обоснование:
+Использование статистических методов (IQR, Z-score) для выявления выбросов.
+Применение методов машинного обучения для заполнения пропущенных значений (например, k-Nearest Neighbors, MICE).
+Важность очистки данных перед обучением моделей машинного обучения, так как "грязные" данные критически снижают точность прогнозов.
+3. Genomic & Phenotypic Integration (Feature Store)
+Модуль отвечает за интеграцию геномных и фенотипических данных в единый формат, пригодный для машинного обучения.
+Инновация: Маппинг генотипов (SNP) к фенотипам.
+Метод:
+Создание единого вектора признаков для каждой коровы: [Genomic_Embeddings + Lactation_History + Environment].
+Genomic_Embeddings: Представление геномных данных в виде числовых векторов (например, с использованием методов PCA, t-SNE).
+Lactation_History: История лактации (например, надои по дням, продолжительность лактации).
+Environment: Информация об условиях содержания (например, температура, влажность, рацион).
+Feature Store: Использование специализированной системы для хранения и управления признаками, обеспечивающей их доступность и консистентность.
+4. ML Engine (Hybrid Model)
+Модуль содержит модели машинного обучения для прогнозирования различных показателей.
+Базовая модель (Baseline):
+Лактационные кривые (модель Вуда/Уилминка) для описания тренда надоев. Используется как базовая модель для сравнения с более сложными моделями.
+Продвинутая модель:
+Gradient Boosting (CatBoost/XGBoost) для работы с табличными данными и нелинейными зависимостями. Такие модели хорошо подходят для прогнозирования различных показателей, таких как надои, здоровье и репродуктивная функция.
+Экспериментальная модель:
+DLGBLUP (Deep Learning + Genomic BLUP): Использование нейросетей для улавливания нелинейных генетических связей между признаками, которые упускает классический линейный GBLUP.
+Архитектура: Многослойный персептрон (MLP) или сверточная нейронная сеть (CNN) для обработки геномных данных.
+Обучение: Обучение модели на исторических данных с использованием методов обратного распространения ошибки.
+Интеграция с GBLUP: Использование результатов GBLUP в качестве дополнительных признаков для нейронной сети или в качестве регуляризатора.
+5. Actionable Intelligence (Слой принятия решений)
+Этот слой отвечает за формирование рекомендаций и алертов на основе результатов работы моделей машинного обучения.
+Вывод:
+Списки на выбраковку: Список животных, которых рекомендуется выбраковать из-за низкой продуктивности или проблем со здоровьем.
+Списки "элиты" для осеменения: Список животных с высоким генетическим потенциалом, которых рекомендуется использовать для осеменения.
+Алерты по здоровью: Предупреждения о возможных проблемах со здоровьем животных (например, мастит, метрит).
+Интерфейс:
+Веб-интерфейс для просмотра результатов и управления рекомендациями.
+API для интеграции с другими системами (например, системами управления фермой).
+Необходимые данные (Feature Sets)
+Фенотипические (Целевые переменные Y):
+Продуктивность: Суточный удой (kg), жир (%), белок (%), КСК (соматические клетки — маркер здоровья).
+События: Дата отела, дата осеменения, даты болезней (мастит, кетоз).
+Источник: СЕЛЭКС (РФ), DairyComp 305, 1С.
+Генотипические (Предикторы Xgeno):
+SNP-маркеры: Данные с DNA-чипов (Illumina BovineSNP50 или HD). Это матрица 0, 1, 2 (где 0 — гомозигота AA, 1 — гетерозигота AB, 2 — гомозигота BB).
+Родословная: ID отца (Sire), ID матери (Dam) — для построения матрицы родства (A-matrix), если генотипы есть не у всех.
+Форматы: .vcf (Variant Call Format), .ped/.map (PLINK), .gds.
+Средовые (Предикторы Xenv):
+Менеджмент: Номер лактации, дни доения (DIM), возраст первого отела.
+Климат: THI (Temperature-Humidity Index) — тепловой стресс сильно снижает удой.
+Где брать данные (Open Source & Commercial)
+Поскольку реальные данные ферм — это коммерческая тайна, для MVP и обучения моделей стоит использовать открытые научные репозитории:
+Генотипы + Фенотипы:
+1000 Bull Genomes Project: https://www.ebi.ac.uk/ena/browser/view/PRJEB42783
+Dryad Digital Repository (Ученые выкладывают "сырые" данные к своим статьям. Искать по ключевым словам "BovineSNP50 data" или "HD Genotypes dairy") - https://datadryad.org/search?q=HD+Genotypes+dairy
+Только Фенотипы (для отладки Time-Series моделей):
+Kaggle:
+Прогнозирование качества молока - https://www.kaggle.com/datasets/cpluzshrijayan/milkquality/data
+Определения веса крупного рогатого скота - https://www.kaggle.com/datasets/sadhliroomyprime/cattle-weight-detection-model-dataset-12k
+Генерация (Синтетические данные):
+Так как найти "парные" данные (геном + удой) в открытом доступе сложно, можно использовать симулятор QMSim. Он генерирует реалистичную популяцию коров с генотипами и фенотипами. Является стандартной практикой в биоинформатике для проверки архитектуры (proof-of-concept).
+Диаграмма прецендентов (Use Case Diagram)
+Описывает функционал системы для двух ролей: пользователя и администратора.
+Описание:
+Пользователь: загружает данные, получает отчет QC (валидацию), смотрит прогноз и принимает решения (выбраковка).
+Система: автоматически валидирует данные и запускает переобучение.
+Админ: управляет версиями моделей.
+Диаграмма потоков данных (Data Flow Diagram) для прогнозирования надоев
+В этом разделе представлена диаграмма потоков данных (DFD), описывающая процесс прогнозирования надоев коров на основе данных о надоях (.csv) и геномных данных (.vcf). Диаграмма охватывает этапы от сбора данных до предоставления прогноза пользователю через пользовательский интерфейс (UI).
+Описание процессов
+Raw Data Ingestion (Сбор исходных данных):
+Raw Data (.csv, .vcf): Исходные данные, включающие файлы .csv с информацией о надоях и файлы .vcf с геномными данными (ДНК).
+S3 Bucket (Raw): Файлы .csv и .vcf загружаются в S3 Bucket (Raw) для хранения.
+Prefect Trigger: Загрузка данных в S3 Bucket инициирует триггер в Prefect, который запускает следующий этап обработки.
+Processing & QC (Bioinformatics Pipeline) (Обработка и контроль качества (Биоинформатический конвейер)):
+Genomics:
+Фильтрация SNP: SNP (Single Nucleotide Polymorphisms) фильтруются на основе MAF (Minor Allele Frequency) < 0.05 и Call Rate < 90%. Это позволяет исключить редкие и ненадежные варианты.
+Преобразование в матрицу дозировок: Отфильтрованные SNP преобразуются в матрицу дозировок (0, 1, 2), представляющую генотип каждого животного по каждому SNP.
+Phenotypes:
+Очистка выбросов (IQR): Данные о надоях очищаются от выбросов с использованием метода IQR (Interquartile Range).
+Сглаживание лактационной кривой (Model Wood): Лактационная кривая сглаживается с использованием модели Wood, что позволяет получить более стабильную и репрезентативную картину продуктивности коровы.
+Feature Store (Parquet + Postgres): Результаты обработки (матрица дозировок SNP и обработанные данные о надоях) сохраняются в Feature Store. Данные хранятся в формате Parquet для эффективного хранения и доступа, а метаданные хранятся в базе данных Postgres.
+Model Training (Hybrid Approach) (Обучение модели (Гибридный подход)):
+Ветка А (Tabular):
+CatBoost: Модель CatBoost обучается на истории лактаций. CatBoost хорошо работает с табличными данными и автоматически обрабатывает категориальные признаки.
+Ветка Б (Genomic):
+PyTorch (CNN/MLP): Модель PyTorch (CNN или MLP) обучается на матрице SNP. CNN (Convolutional Neural Network) или MLP (Multilayer Perceptron) используются для извлечения признаков из геномных данных и прогнозирования надоев.
+Ветка В (Stacking):
+Ridge Regression: Мета-модель (Ridge Regression) объединяет прогнозы, полученные в ветках А и Б. Ridge Regression используется для регуляризации и предотвращения переобучения при объединении прогнозов.
+MLflow: Метрики обучения (например, RMSE, R-squared) записываются в MLflow для отслеживания и сравнения различных моделей.
+Inference & Action (Вывод и действие):
+UI (User Interface): Пользователь запрашивает прогноз через пользовательский интерфейс (UI), указывая ID коровы.
+Backend: Backend получает запрос от UI.
+MLflow Model Registry: Backend загружает лучшую модель из MLflow Model Registry. MLflow Model Registry позволяет управлять версиями моделей и выбирать лучшую модель для использования в production.
+Inference: Загруженная модель используется для прогнозирования надоев для указанной коровы.
+JSON Output: Результат прогнозирования выдается в формате JSON, включающем ID коровы, прогнозируемый надой за 305 дней и рекомендацию (например, "KEEP" - оставить в стаде).
+UI: JSON ответ отправляется обратно в UI для отображения пользователю.
+Проектирование Базы Данных (Схема и СУБД)
+Для проекта Genome AI классическая реляционная БД не справится с геномикой (миллионы колонок SNP). Нужен гибридный подход.
+Рекомендованная СУБД: PostgreSQL (основная) + TimescaleDB (расширение для временных рядов) + S3/MinIO (для геномных файлов).
+Схема базы данных (Концептуальная ER-диаграмма)
+Представьте структуру в виде "Звезды", где в центре — сущность «Животное».
+Основные таблицы (Entities):
+Animals (Коровы):
+id (UUID), rfid_tag (ушная бирка), birth_date, breed_code, sire_id, dam_id, farm_id.
+Genotypes (Метаданные генома):
+animal_id (FK), chip_type (e.g., Illumina50K), file_path (ссылка на .vcf в S3), qc_status (Pass/Fail), genomic_breeding_value (gEBV — предсказанный результат).
+Важно: Сами SNP (0/1/2) в SQL не храним! Это слишком дорого. Храним путь к бинарному файлу или используем формат Parquet.
+Lactations (Циклы):
+id, animal_id, start_date, end_date, lactation_number, total_yield_305.
+DailyYields (Временные ряды - TimescaleDB):
+time (Timestamp), animal_id, milk_kg, fat_percent, protein_percent, conductivity (для детекции мастита).
+Почему TimescaleDB: Она позволяет делать запросы "Средний удой за неделю" в 100 раз быстрее обычного Postgres.
+ModelPredictions (Результаты ML):
+id, animal_id, model_version (из MLflow), prediction_date, predicted_value, confidence_score, action_recommendation (cull/keep).
+Пайплайн интерфейса (Sequence Diagram)
+Показывает, что происходит "под капотом", когда пользователь загружает файл.
+Описание процесса:
+Пользователь загружает файл.
+Модуль QC Service проверяет качество.
+Если ОК, Feature Store готовит вектор признаков (объединяет геном и фенотип).
+ML Predictor берет актуальную модель из Registry и делает прогноз.
+Результат сохраняется в БД.
+Стек разработки (Tech Stack)
+Учитывая требования MLOps и специфику биоинформатики предлагаю следующий стек:
+Infrastructure & Backend
+Язык: Python 3.10+ (Безальтернативно для биоинформатики и ML).
+Web Framework: FastAPI. (Высокая скорость, асинхронность, автоматическая документация Swagger — идеально для микросервисов).
+Database: PostgreSQL + TimescaleDB.
+Object Storage: MinIO (S3-compatible). Для хранения "тяжелых" геномных файлов (.vcf, .bed, .bim, .fam).
+Containerization: Docker & Docker Compose (для локальной разработки), Kubernetes (для продакшена, если нужно масштабирование).
+Data Science & Bioinformatics (Core)
+Data Manipulation: Pandas, Polars (для быстрой обработки больших CSV).
+Genomics:
+PyPLINK или Pandas-Plink: Чтение геномных файлов.
+Scikit-Allele: Работа с генетическими вариациями.
+BioPython: Общие утилиты.
+Machine Learning (Hybrid):
+XGBoost / CatBoost: Для табличных данных (фенотипы). CatBoost лучше работает с категориальными признаками (порода, ферма) "из коробки".
+PyTorch: Для реализации DLGBLUP (нейросетевой геномный прогноз).
+MLOps
+Version Control (Data): DVC (Data Version Control). Хранит ссылки на данные в Git, а сами файлы в S3/MinIO. Критично для воспроизводимости.
+Experiment Tracking: MLflow. Логирует параметры (learning rate, depth), метрики (RMSE, NDCG) и артефакты моделей.
+Orchestration: Prefect (современнее и легче Airflow) или Apache Airflow. Запускает пайплайны: Ingest -> QC -> Train -> Evaluate.
+Serving: Seldon Core или просто FastAPI обертка над ONNX-моделью для быстрого инференса (< 2 сек).
+Frontend (Dashboard)
+React или Vue.js.
+Plotly.js / Apache ECharts: для отрисовки красивых лактационных кривых и графиков PCA (геномных кластеров).
+Примерный код:
+SQL DDL Script (schema.sql) - PostgreSQL + TimescaleDB
+Мы используем гибридный подход:
+PostgreSQL: для реляционных данных (животные, фермы, метаданные генома).
+TimescaleDB: для временных рядов (ежедневные надои, датчики), так как они растут очень быстро.
+-- 1. Активация расширений (TimescaleDB для временных рядов)
+CREATE EXTENSION IF NOT EXISTS timescaledb;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- 2. Справочник ферм (Мульти-тенантность)
+CREATE TABLE farms (
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+name VARCHAR(255) NOT NULL,
+location VARCHAR(255),
+created_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- 3. Основная сущность: Животные
+CREATE TABLE animals (
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+farm_id UUID REFERENCES farms(id) ON DELETE CASCADE,
+rfid_tag VARCHAR(50) NOT NULL, -- Ушная бирка
+official_id VARCHAR(50), -- Государственный номер
+birth_date DATE NOT NULL,
+breed VARCHAR(50), -- Порода (Holstein, Jersey)
+sex VARCHAR(10) CHECK (sex IN ('M', 'F')),
+sire_id UUID, -- Отец (для родословной)
+dam_id UUID, -- Мать
+created_at TIMESTAMPTZ DEFAULT NOW(),
+UNIQUE(farm_id, rfid_tag)
+);
+-- 4. Геномные данные (Метаданные файлов)
+-- Сами SNP храним в S3/MinIO, здесь только ссылки и метрики QC
+CREATE TABLE genotypes (
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+animal_id UUID REFERENCES animals(id) ON DELETE CASCADE,
+file_path VARCHAR(512) NOT NULL, -- Путь к .vcf или .bed файлу в MinIO
+chip_type VARCHAR(100), -- Например: 'Illumina BovineSNP50'
+call_rate DECIMAL(5, 4), -- Качество генотипирования (0.9900)
+minor_allele_freq_avg DECIMAL(5, 4),
+upload_date TIMESTAMPTZ DEFAULT NOW(),
+qc_status VARCHAR(20) DEFAULT 'PENDING' CHECK (qc_status IN ('PENDING', 'PASSED', 'FAILED'))
+);
+-- 5. Лактации (Периоды продуктивности)
+CREATE TABLE lactations (
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+animal_id UUID REFERENCES animals(id) ON DELETE CASCADE,
+lactation_number INT NOT NULL,
+start_date DATE NOT NULL,
+end_date DATE,
+total_yield_305 DECIMAL(10, 2), -- Прогноз или факт за 305 дней
+is_closed BOOLEAN DEFAULT FALSE
+);
+-- 6. Временные ряды: Ежедневные надои (TimescaleDB Hypertable)
+CREATE TABLE daily_yields (
+time TIMESTAMPTZ NOT NULL,
+animal_id UUID REFERENCES animals(id) ON DELETE CASCADE,
+lactation_id UUID REFERENCES lactations(id),
+milk_kg DECIMAL(5, 2),
+fat_percent DECIMAL(4, 2),
+protein_percent DECIMAL(4, 2),
+scc_count INT, -- Соматические клетки (здоровье)
+conductivity DECIMAL(5, 2) -- Электропроводность (для детекции мастита)
+);
+-- Превращаем таблицу в гипертаблицу (партицирование по времени)
+SELECT create_hypertable('daily_yields', 'time');
+-- 7. Результаты ML прогнозов (Actionable Intelligence)
+CREATE TABLE predictions (
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+animal_id UUID REFERENCES animals(id) ON DELETE CASCADE,
+model_version VARCHAR(50) NOT NULL, -- Ссылка на MLflow Run ID
+prediction_type VARCHAR(50), -- 'YIELD_305', 'CULLING_RISK', 'BREEDING_VALUE'
+predicted_value DECIMAL(10, 2),
+confidence_score DECIMAL(4, 3), -- Уверенность 0.0-1.0
+created_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- Индексы для ускорения
+CREATE INDEX idx_animals_farm ON animals(farm_id);
+CREATE INDEX idx_yields_animal_time ON daily_yields(animal_id, time DESC);
+Конфигурация DVC
+DVC (Data Version Control) нужен, чтобы версионировать огромные геномные файлы и воспроизводить пайплайн.
+project/
+├── data/
+│   ├── raw/            # Исходные .vcf и .csv
+│   ├── processed/      # Очищенные данные
+├── models/             # Бинарники моделей (.json для XGBoost, .pth для PyTorch)
+├── src/                # Скрипты (ingest.py, train.py)
+├── dvc.yaml            # Пайплайн
+└── params.yaml         # Гиперпараметры
+Конфигурация dvc.yaml (определяет граф зависимостей)
+stages:
+# Шаг 1: Загрузка и первичная очистка (QC)
+ingest_and_qc:
+cmd: python src/ingest_data.py --config=params.yaml
+deps:
+- src/ingest_data.py
+- data/raw/genotypes.vcf
+- data/raw/milk_yields.csv
+params:
+- qc.min_call_rate
+- qc.maf_threshold
+outs:
+- data/processed/genotype_matrix.parquet
+- data/processed/phenotypes_clean.csv
+# Шаг 2: Генерация фичей (Feature Engineering)
+featurize:
+cmd: python src/features.py
+deps:
+- src/features.py
+- data/processed/genotype_matrix.parquet
+- data/processed/phenotypes_clean.csv
+outs:
+- data/processed/train_dataset.pkl
+- data/processed/test_dataset.pkl
+# Шаг 3: Обучение Гибридной Модели (Training)
+train_hybrid:
+cmd: python src/train_hybrid.py
+deps:
+- src/train_hybrid.py
+- data/processed/train_dataset.pkl
+params:
+- train.learning_rate
+- train.epochs
+- train.model_type # 'xgboost' or 'dlgblup'
+outs:
+- models/hybrid_model_v1.pth
+metrics:
+- metrics.json:
+cache: false
+Научные статьи: https://drive.google.com/drive/folders/1YNxYw0VbsJ1hdes4IZ7jZjafEeguBK4i?usp=sharing

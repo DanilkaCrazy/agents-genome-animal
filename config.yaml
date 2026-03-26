@@ -1,0 +1,64 @@
+project:
+  name: "agents-genome-animal"
+  run_name: "default_run"
+
+collection:
+  # Minimum 2 sources:
+  # - one open dataset (HuggingFace)
+  # - one API or scraping source
+  sources:
+    - type: kaggle_dataset
+      dataset: "shahhet2812/cattle-health-and-feeding-data"
+      file: null
+      sample: 3000
+      # Если в CSV нет готового текстового столбца, собираем текст из табличных признаков:
+      text_col: null
+      label_col: "health"
+      feature_cols: null
+      text_prefix: "cattle_record: "
+      source_name: "kaggle:cattle-health-feeding"
+    - type: hf_dataset
+      name: roshan8312/cattle-disease-prediction
+      split: train
+      sample: 2000
+      text_col: null
+      label_col: "prognosis"
+      feature_cols: null
+      text_prefix: "symptoms: "
+    - type: scrape
+      # 3-й источник (scraping): цены на корма (soybean meal) как внешний контекст.
+      url: "https://www.indexmundi.com/commodities/?commodity=soybean-meal&months=12"
+      selector: "table tr"
+      max_items: 40
+
+quality:
+  detect:
+    outlier_feature: "text_length"
+    outlier_method: "iqr"
+  fix:
+    strategy:
+      missing: "drop"
+      duplicates: "drop"
+      outliers: "clip_iqr"
+
+annotation:
+  modality: "text"
+  # Labels to assign to unlabeled/unknown records.
+  label_space:
+    - "neg"
+    - "pos"
+  confidence_threshold: 0.70
+
+active_learning:
+  model: "logreg"
+  n_initial: 50
+  n_iterations: 5
+  batch_size: 20
+  strategies:
+    - "entropy"
+    - "random"
+
+output:
+  artifacts_dir: "artifacts"
+  save_formats:
+    - "csv"
