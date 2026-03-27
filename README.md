@@ -1,3 +1,4 @@
+```markdown
 # Genome AI Agents — End-to-End Data Pipeline
 
 **Genome AI Agents** is a production‑ready, multi‑agent data pipeline that unifies heterogeneous agricultural data sources (Kaggle, Hugging Face, and live web scraping) into a single decision support system for cattle health management. It automates data collection, quality control, annotation, and active learning, with a mandatory human‑in‑the‑loop (HITL) checkpoint to ensure expert‑level accuracy.
@@ -13,9 +14,11 @@ The project fulfills a four‑assignment academic track (Genome AI Agents) and d
 - [Solution: What the Pipeline Does](#solution-what-the-pipeline-does)
 - [Architecture](#architecture)
 - [Technical Highlights](#technical-highlights)
+- [Agent Specifications](#agent-specifications)
+- [History of Improvements](#history-of-improvements)
 - [Installation](#installation)
 - [Running the Pipeline](#running-the-pipeline)
-- [Human‑in‑the‑Loop Workflow](#humanin-the-loop-workflow)
+- [Human‑in‑the‑Loop Workflow](#human-in-the-loop-workflow)
 - [Active Learning](#active-learning)
 - [Outputs and Artifacts](#outputs-and-artifacts)
 - [Configuration](#configuration)
@@ -30,7 +33,7 @@ The project fulfills a four‑assignment academic track (Genome AI Agents) and d
 
 ## Project Overview
 
-**Genome AI Agents** is a multi‑agent pipeline that:
+Genome AI Agents is a multi‑agent pipeline that:
 
 - **Collects** data from three distinct sources (Kaggle, Hugging Face, and web scraping) and unifies them under a common schema.
 - **Cleans** the data by detecting and fixing quality issues (missing values, duplicates, outliers).
@@ -174,6 +177,106 @@ The pipeline is built as a sequential chain of independent agents, each with a w
 
 7. **Unsupervised clustering for `unknown`**  
    Scripts `cluster_unknowns.py` and `visualize_unknown_clusters.py` help a human expert batch‑label large groups of `unknown` examples by clustering similar texts and providing a 2D visualization.
+
+---
+
+## Agent Specifications
+
+### DataCollectionAgent
+
+Main methods:
+- `scrape(url, selector, max_items)` → `DataFrame`
+- `fetch_api(endpoint, params)` → `DataFrame` (best‑effort normalizing JSON)
+- `load_dataset(name, split, sample, text_col, label_col, feature_cols, text_prefix)` → `DataFrame`
+- `merge(sources)` → `DataFrame` (concat + canonicalize)
+
+Key guarantees:
+- Unifies the schema (including `audio`/`image` as `null` for text‑only pipelines)
+- Serializes `text/label/source/collected_at` as string dtype
+
+### DataQualityAgent
+
+Main methods:
+- `detect_issues(df)` → `dict`
+- `fix(df, strategy)` → `DataFrame`
+- `compare(df_before, df_after)` → `DataFrame`
+
+Logic:
+- **missing**: count/pct per column (audio/image considered N/A if entire column is null)
+- **duplicates**: count duplicates by `text`
+- **outliers**: IQR‑based boundaries on `text_length` (with example indices)
+- **imbalance**: distribution by `label` and max/min ratio
+
+Fix strategies:
+- missing: `drop` or `fill_unknown`
+- duplicates: `drop` or `keep_first`
+- outliers: `clip_iqr`, `remove_iqr`, `none`
+
+### AnnotationAgent
+
+Main methods:
+- `auto_label(df, modality='text')` → `DataFrame`
+- `generate_spec(df, task)` → `str` (Markdown)
+- `check_quality(df_labeled)` → `dict` (label distribution, confidence, kappa if `label_human` present)
+- `export_to_labelstudio(df, out_path)` → `Path` (JSON import for LabelStudio)
+
+HITL queue:
+- `build_review_queue(df_labeled, threshold, prioritize_rare=True)` returns low‑confidence examples.
+- If `prioritize_rare=True`, sorts first by rarity of predicted class (`label_frequency` calculated over entire dataset), then by ascending `confidence`.
+- Queue columns: `text`, `label_suggested`, `confidence`, `source`, `collected_at`, `label_human` (empty).
+
+### ActiveLearningAgent
+
+Main methods:
+- `fit(labeled_df)` → sklearn Pipeline (TF‑IDF + LogisticRegression)
+- `query(model, pool_df, strategy, k)` → list of indices
+- `evaluate(model, labeled_df, test_df)` → `dict` (accuracy, macro‑F1)
+- `run_cycle(...)` → history list of dicts
+- `report(history, out_path)` → learning‑curve plot (F1 vs n_labeled)
+
+Sampling strategies:
+- `entropy`: selects examples with highest prediction entropy
+- `margin`: selects examples with smallest difference between top‑2 probabilities
+- `random`: random selection
+
+---
+
+## History of Improvements
+
+This section documents how the pipeline evolved and the impact on model quality.
+
+### Stage 1 – Data Collection
+Initial version collected data from the three sources and unified them. Early runs showed large class imbalance and many `unknown` rows.
+
+### Stage 2 – Data Quality
+Added `DataQualityAgent` to detect duplicates and outliers. The initial dataset had significant duplicates by `text` and strong class imbalance.
+
+### Stage 3 – Auto‑Annotation + HITL
+Introduced zero‑shot labeling with confidence scores, and a HITL queue that prioritizes rare classes. This allowed experts to focus on the most uncertain examples first.
+
+### Stage 4 – Leakage‑safe Preparation
+Added preparation before training: deduplication by `text` before train/test split, policies for `unknown` (`drop`/`cap`/`keep`), and filtering of too‑rare classes (`min_class_count`). This prevented data leakage and reduced noise.
+
+### Problem – Prediction Collapse
+Early baseline models predicted only one class for all test examples. This was detected by `model_diagnostics.json` (`prediction_collapse = True`). The input texts were structural (many `feature=0/1` tokens), and word‑TF‑IDF did not provide enough discriminative signal.
+
+### Fix – Character n‑grams
+Switched from word‑based TF‑IDF to character n‑grams (`char_wb`, 3–5) with solver `saga` and increased `max_iter`. This change was applied in both `al_agent.py` (final model) and `annotation_agent.py` (auto‑annotation).
+
+### Result – Improved Metrics
+After the fix, metrics stabilised:
+- accuracy = 0.933
+- macro‑F1 = 0.881
+- `prediction_collapse = False`
+
+Class distributions and prediction distributions are now saved in `model_diagnostics.json` to quickly spot regressions.
+
+### Unsupervised ML for `unknown` – Accelerating HITL
+For the large `unknown` class, we added clustering tools:
+- `scripts/cluster_unknowns.py` → `reports/unknown_clusters.csv` and `unknown_clusters.md`
+- `scripts/visualize_unknown_clusters.py` → `reports/unknown_clusters_plot.png`
+
+These allow an expert to review groups of similar texts and assign labels in bulk.
 
 ---
 
@@ -404,3 +507,4 @@ The pipeline fulfills four graded assignments (`DataCollectionAgent`, `DataQuali
 Distributed under the MIT License. See `LICENSE` for more information.
 
 For questions, issues, or contributions, please open an issue on GitHub.
+```
