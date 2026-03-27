@@ -1,6 +1,11 @@
 
 # Genome AI Agents — End-to-End Data Pipeline
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-18+-61DAFB.svg)](https://reactjs.org/)
+
 **Genome AI Agents** is a production‑ready, multi‑agent data pipeline that unifies heterogeneous agricultural data sources (Kaggle, Hugging Face, and live web scraping) into a single decision support system for cattle health management. It automates data collection, quality control, annotation, and active learning, with a mandatory human‑in‑the‑loop (HITL) checkpoint to ensure expert‑level accuracy.
 
 The project fulfills a four‑assignment academic track (Genome AI Agents) and demonstrates a complete machine learning lifecycle that can be reproduced with a single command.
