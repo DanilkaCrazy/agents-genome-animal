@@ -27,8 +27,10 @@ class ActiveLearningAgent:
         y = labeled_df["label"].astype("string").tolist()
         clf: Pipeline = Pipeline(
             steps=[
-                ("tfidf", TfidfVectorizer(min_df=2, max_features=30000, ngram_range=(1, 2))),
-                ("logreg", LogisticRegression(max_iter=300, n_jobs=1, class_weight="balanced")),
+                # For structured "key=value; ..." symptom strings, character n-grams
+                # provide much stronger signal than word tokens.
+                ("tfidf", TfidfVectorizer(analyzer="char_wb", ngram_range=(3, 5), min_df=2, max_features=80000)),
+                ("logreg", LogisticRegression(max_iter=5000, class_weight="balanced", solver="saga", C=4.0)),
             ]
         )
         clf.fit(X, y)
@@ -111,7 +113,11 @@ class ActiveLearningAgent:
         plt.figure(figsize=(8, 5))
         for strat in df["strategy"].unique():
             sub = df[df["strategy"] == strat].sort_values("n_labeled")
-            plt.plot(sub["n_labeled"], sub["f1"], marker="o", label=strat)
+            # Make overlapping curves visually distinguishable.
+            if str(strat) == "entropy":
+                plt.plot(sub["n_labeled"], sub["f1"], marker="o", linewidth=2.5, label=strat)
+            else:
+                plt.plot(sub["n_labeled"], sub["f1"], marker="s", linestyle="--", linewidth=2.0, alpha=0.85, label=strat)
         plt.xlabel("n_labeled")
         plt.ylabel("F1 (macro)")
         plt.title("Active Learning: learning curves")

@@ -48,12 +48,22 @@ annotation:
     - "neg"
     - "pos"
   confidence_threshold: 0.70
+  # Для обучения используем более мягкий порог, чтобы не превращать
+  # слишком много auto-label'ов в `unknown` до HITL.
+  train_confidence_threshold: 0.20
+  # Sort low-confidence examples by predicted class rarity first
+  prioritize_rare: true
 
 active_learning:
   model: "logreg"
-  n_initial: 50
+  n_initial: 250
   n_iterations: 5
   batch_size: 20
+  # Leakage-safe preparation and imbalance controls
+  dedup_before_split: true
+  unknown_policy: "drop"  # drop | cap | keep
+  unknown_cap_ratio: 0.20
+  min_class_count: 2
   strategies:
     - "entropy"
     - "random"

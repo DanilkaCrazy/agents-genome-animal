@@ -1,0 +1,9 @@
+{
+  "rows_before_dedup": 3457,
+  "rows_after_dedup": 3457,
+  "unknown_policy": "drop",
+  "rows_after_unknown_policy": 448,
+  "min_class_count": 2,
+  "rows_after_min_class_filter": 448,
+  "n_classes_final": 26
+}

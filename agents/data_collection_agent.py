@@ -133,7 +133,7 @@ class DataCollectionAgent:
 
     def merge(self, sources: list[pd.DataFrame]) -> pd.DataFrame:
         if not sources:
-            return pd.DataFrame(columns=["text", "label", "source", "collected_at"])
+            return pd.DataFrame(columns=["text", "audio", "image", "label", "source", "collected_at"])
         df = pd.concat(sources, ignore_index=True, sort=False)
         return self._canonicalize(df)
 
@@ -208,11 +208,14 @@ class DataCollectionAgent:
 
     @staticmethod
     def _canonicalize(df: pd.DataFrame) -> pd.DataFrame:
+        # This function may receive a slice/view from upstream.
+        # Copy first to avoid chained-assignment / SettingWithCopy warnings.
+        df = df.copy()
         # required output columns: text/audio/image, label, source, collected_at
-        for col in ["text", "label", "source", "collected_at"]:
+        for col in ["text", "audio", "image", "label", "source", "collected_at"]:
             if col not in df.columns:
                 df[col] = None
-        out = df[["text", "label", "source", "collected_at"]].copy()
+        out = df[["text", "audio", "image", "label", "source", "collected_at"]].copy()
 
         out["text"] = out["text"].astype("string")
         out["label"] = out["label"].astype("string")

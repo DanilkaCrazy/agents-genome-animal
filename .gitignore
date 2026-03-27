@@ -8,3 +8,5 @@ __pycache__/
 .DS_Store
 venv/
 __pycache__/
+venv/
+__pycache__/

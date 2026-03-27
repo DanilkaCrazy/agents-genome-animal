@@ -50,7 +50,9 @@
 
 ### Стандартная схема датасета (контракт между агентами)
 Агенты 1–2 обязаны возвращать `pd.DataFrame` со стандартными колонками:
-- **`text`**: текст (для audio/image в этом шаблоне не используется)
+- **`text`**: текст (в этом шаблоне используется для `modality=text`)
+- **`audio`**: audio-поле (в text-only пайплайне всегда `null`)
+- **`image`**: image-поле (в text-only пайплайне всегда `null`)
 - **`label`**: метка (может быть `unknown` до разметки)
 - **`source`**: строка-источник (`hf:...`, `api:...`, `scrape:...`)
 - **`collected_at`**: UTC timestamp (ISO)
@@ -67,6 +69,12 @@ python -m pip install -r requirements.txt
 python run_pipeline.py
 ```
 
+Для борьбы с дисбалансом и утечками в AL-настройках (`config.yaml -> active_learning`) добавлены параметры:
+- `dedup_before_split` — дедупликация по `text` до train/test split
+- `unknown_policy` — `drop|cap|keep` для класса `unknown`
+- `unknown_cap_ratio` — доля `unknown` при `unknown_policy=cap`
+- `min_class_count` — минимальный размер класса для участия в AL
+
 Артефакты сохраняются в `artifacts/run_<run_id>/`:
 - `data_raw.csv` — собранные данные
 - `data_clean.csv` — очищенные данные
@@ -81,6 +89,13 @@ python run_pipeline.py
 - `reports/annotation_metrics.json` — метрики качества разметки
 - `reports/al_history.csv` и `reports/learning_curve.png` — AL эксперимент (если данных достаточно)
 - `run_manifest.json` — manifest прогона (run_id + пути)
+
+Также Pipeline пишет “latest” артефакты в структуру проекта:
+- `data/raw/data_raw.csv`
+- `data/labeled/data_clean.csv`, `data/labeled/data_auto_labeled.csv`, `data/labeled/data_labeled_final.csv`
+- `review_queue.csv` (очередь HITL для удобства)
+- `reports/quality_report.md`, `reports/annotation_report.md`, `reports/al_report.md`, `reports/final_report.md`
+- `models/final_model.pkl` и `models/vectorizer.pkl` (если AL не пропущен)
 
 ### Human-in-the-loop (обязательная точка)
 1) После первого запуска откройте `review_queue.csv`.

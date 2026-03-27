@@ -17,8 +17,16 @@ class DataQualityAgent:
     def detect_issues(self, df: pd.DataFrame) -> dict[str, Any]:
         report: dict[str, Any] = {}
 
-        missing = df.isna().sum().to_dict()
-        missing_pct = (df.isna().mean() * 100).round(2).to_dict()
+        # For a text-only pipeline, `audio`/`image` are expected to be null.
+        # To keep the quality report meaningful, we treat columns that are
+        # entirely-missing across the whole dataset as "not applicable".
+        is_na = df.isna()
+        missing = is_na.sum().to_dict()
+        missing_pct = (is_na.mean() * 100).round(2).to_dict()
+        for col in ["audio", "image"]:
+            if col in df.columns and bool(is_na[col].all()):
+                missing[col] = 0
+                missing_pct[col] = 0.0
         report["missing"] = {"count": missing, "pct": missing_pct}
 
         dup_n = int(df.duplicated(subset=["text"]).sum()) if "text" in df.columns else int(df.duplicated().sum())
