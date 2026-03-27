@@ -1,4 +1,4 @@
-```markdown
+
 # Genome AI Agents — End-to-End Data Pipeline
 
 **Genome AI Agents** is a production‑ready, multi‑agent data pipeline that unifies heterogeneous agricultural data sources (Kaggle, Hugging Face, and live web scraping) into a single decision support system for cattle health management. It automates data collection, quality control, annotation, and active learning, with a mandatory human‑in‑the‑loop (HITL) checkpoint to ensure expert‑level accuracy.
